@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nubby's Number Factory</title>
+    <style>
+        body, html {
+            margin: 0; padding: 0; width: 100%; height: 100%;
+            background-color: #121216; font-family: 'Segoe UI', Roboto, sans-serif;
+            color: white; overflow: hidden; display: flex; justify-content: center; align-items: center;
+        }
+        #factoryContainer {
+            position: relative; width: 800px; height: 600px;
+            background: #1e1e24; border: 4px solid #4a4a5a; box-shadow: 0 15px 40px rgba(0,0,0,0.8);
+            border-radius: 8px; overflow: hidden;
+        }
+        .screen {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            background: radial-gradient(circle, #252532 0%, #0f0f14 100%); z-index: 10;
+        }
+        .hidden { display: none !important; }
+        button {
+            background: linear-gradient(135deg, #ff9f43, #ff6b81); color: white; border: none; 
+            padding: 14px 35px; margin: 10px; font-size: 18px; font-weight: bold; border-radius: 25px;
+            cursor: pointer; box-shadow: 0 4px 15px rgba(255, 159, 67, 0.4); transition: all 0.2s ease;
+        }
+        button:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(255, 159, 67, 0.6); }
+        
+        /* Game HUD Layout styling */
+        #factoryHUD {
+            position: absolute; top: 15px; left: 15px; right: 15px;
+            display: flex; justify-content: space-between; align-items: center;
+            pointer-events: none; z-index: 4;
+        }
+        .hud-panel {
+            background: rgba(30, 30, 40, 0.9); padding: 10px 20px; 
+            border-radius: 12px; border: 1px solid rgba(255,255,255,0.1);
+            font-weight: bold; font-size: 16px; box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+        }
+        .target-box {
+            color: #f1c40f; text-shadow: 0 0 10px rgba(241,196,15,0.5); font-size: 20px;
+        }
+        
+        /* Interactive Drop Indicator Guide line */
+        #dropGuide {
+            position: absolute; top: 80px; bottom: 0; width: 2px;
+            border-left: 2px dashed rgba(255,255,255,0.15); pointer-events: none; z-index: 2;
+        }
+        canvas { background: #16161d; display: block; cursor: crosshair; }
+        
+        /* Overlay Game Over Cutscene panels */
+        #popupOverlay {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(10, 10, 14, 0.85); display: flex; flex-direction: column;
+            justify-content: center; align-items: center; z-index: 5;
+            backdrop-filter: blur(4px); opacity: 0; transition: opacity 0.3s ease;
+        }
+        #popupOverlay.active { opacity: 1; }
+        #popupText { 
+            font-size: 40px; font-weight: 900; color: #fff; text-transform: uppercase; letter-spacing: 2px;
+            text-shadow: 0 0 20px rgba(255,107,129,0.8); text-align: center; max-width: 90%; white-space: pre-line;
+        }
+    </style>
+</head>
+<body>
+
+<div id="factoryContainer">
+    <!-- TOP CORE GAMEPLAY HUD -->
+    <div id="factoryHUD" class="hidden">
+        <div id="scoreDisplay" class="hud-panel">Score: 0</div>
+        <div id="targetDisplay" class="hud-panel target-box">Target Sum: 10</div>
+        <div id="nextDisplay" class="hud-panel">Next Value: ?</div>
+    </div>
+
+    <!-- MAIN START INTERFACE SCREEN -->
+    <div id="mainMenu" class="screen">
+        <h1 style="font-size: 48px; font-weight: 900; letter-spacing: 2px; margin-bottom: 10px; background: linear-gradient(45deg, #ff9f43, #ff4757); -webkit-background-clip: text; -webkit-text-fill-color: transparent; text-align: center;">NUMBER FACTORY</h1>
+        <p style="color: #a4a4c1; max-width: 500px; text-align: center; margin-bottom: 25px; font-size: 15px; line-height: 1.5;"> Drop mathematical number blocks onto conveyor platforms. Combine stacking numbers to perfectly match the <b>Target Sum</b> to clear blocks and secure assembly points!</p>
+        <button id="btnStartGame">Start Assembly Line</button>
+    </div>
+
+    <!-- GENERAL INTERFACE CUTSCENES PANEL -->
+    <div id="popupOverlay" class="hidden">
+        <div id="popupText">FACTORY OVERFLOW!</div>
+        <button id="btnRestart" class="hidden" style="margin-top:20px;">Restart Factory</button>
+    </div>
+
+    <div id="dropGuide" class="hidden"></div>
+    <canvas id="factoryCanvas" width="800" height="600"></canvas>
+</div>
+
+<script>
+    const canvas = document.getElementById('factoryCanvas');
+    const ctx = canvas.getContext('2d');
+
+    // Element Query Cache Map Selectors
+    const mainMenu = document.getElementById('mainMenu');
+    const factoryHUD = document.getElementById('factoryHUD');
+    const popupOverlay = document.getElementById('popupOverlay');
+    const popupText = document.getElementById('popupText');
+    const btnRestart = document.getElementById('btnRestart');
+    const dropGuide = document.getElementById('dropGuide');
+    const scoreDisplay = document.getElementById('scoreDisplay');
+    const targetDisplay = document.getElementById('targetDisplay');
+    const nextDisplay = document.getElementById('nextDisplay');
+
+    // Game Core State Storage Units
+    let gameActive = false;
+    let score = 0;
+    let targetSum = 10;
+    let nextBlockValue = 1;
+    let mouseX = 400;
+
+    let blocks = [];
+    let conveyors = [];
+    let floatingTexts = [];
+
+    // Factory Config Balances
+    const gravity = 0.2;
+    const friction = 0.98;
+    const SPAWN_Y = 110;
+    const TOP_DANGER_Y = 160;
+
+    // Build Platform Assembly Line Structures (X, Y, Width, Speed directional variables)
+    function initEnvironmentLayout() {
+        conveyors = [
+            { x: 50,  y: 320, w: 320, h: 20, speed: 0.8 },
+            { x: 430, y: 320, w: 320, h: 20, speed: -0.8 },
+            { x: 150, y: 500, w: 500, h: 25, speed: 0.3 }
+        ];
+    }
+
+    // Input Trackers Mapping Coordinates
+    window.addEventListener('mousemove', e => {
+        const rect = canvas.getBoundingClientRect();
+        mouseX = e.clientX - rect.left;
+        // Clamp indicators neatly within the inside workspace grids
+        if (mouseX < 25) mouseX = 25;
+        if (mouseX > 775) mouseX = 775;
+        dropGuide.style.left = mouseX + "px";
+    });
+
+    canvas.addEventListener('click', () => {
+        if (!gameActive || popupOverlay.classList.contains('active')) return;
+        spawnPlayerBlock(mouseX, SPAWN_Y, nextBlockValue);
+        generateNextValue();
+    });
+
+    document.getElementById('btnStartGame').addEventListener('click', startNewGame);
+    btnRestart.addEventListener('click', startNewGame);
+
+    function startNewGame() {
+        mainMenu.classList.add('hidden');
+        popupOverlay.classList.add('hidden');
+        popupOverlay.classList.remove('active');
+        btnRestart.classList.add('hidden');
+        dropGuide.classList.remove('hidden');
+        factoryHUD.classList.remove('hidden');
+        
+        score = 0;
+        targetSum = Math.floor(Math.random() * 8) + 8; // Varied Targets ranging between 8-15
+        blocks = [];
+        floatingTexts = [];
+        gameActive = true;
+        
+        initEnvironmentLayout();
+        generateNextValue();
+        updateHUDMetrics();
+    }
+
+    function generateNextValue() {
+        // Generates random value blocks that gracefully fit target boundaries
+        nextBlockValue = Math.floor(Math.random() * (targetSum - 2)) + 1;
+        updateHUDMetrics();
+    }
+
+    function updateHUDMetrics() {
+        scoreDisplay.innerText = "Score: " + score;
+        targetDisplay.innerText = "🎯 Target Sum: " + targetSum;
+        nextDisplay.innerText = "Next Value: " + nextBlockValue;
+    }
+
+    function spawnPlayerBlock(x, y, value) {
+        // Hexadecimal dynamic color mapping profiles based on values
+        const colors = ["#54a0ff", "#5f27cd", "#ff4757", "#2ecc71", "#ff9f43", "#1abc9c", "#9b59b6", "#f1c40f"];
+        let colorIndex = value % colors.length;
+
+        blocks.push({
+            x: x, y: y, vx: 0, vy: 0,
+            radius: 20, value: value,
+            color: colors[colorIndex], inAir: true, groundedTimer: 0
+        });
+    }
+
+    function createFloatingText(x, y, txt, color) {
+        floatingTexts.push({ x: x, y: y, text: txt, color: color, alpha: 1, life: 60 });
+    }
+    function processBlockLogic() {
+        blocks.forEach(b => {
+            // Apply gravitational properties
+            b.vy += gravity;
+            b.vx *= friction;
+            
+            b.x += b.vx;
+            b.y += b.vy;
+
+            // Screen edge containment mechanics
+            if (b.x - b.radius < 0) { b.x = b.radius; b.vx *= -0.5; }
+            if (b.x + b.radius > canvas.width) { b.x = canvas.width - b.radius; b.vx *= -0.5; }
+
+            let onPlatform = false;
+
+            // Evaluate Conveyor Platform Staging Intersections
+            conveyors.forEach(conv => {
+                if (b.x + b.radius > conv.x && b.x - b.radius < conv.x + conv.w &&
+                    b.y + b.radius >= conv.y && b.y - b.radius < conv.y + conv.h) {
+                    
+                    // Vertical Resolution onto floor surface profiles
+                    if (b.vy > 0 && b.y  b.y < canvas.height + 50);
+
+        // Evaluate Danger Overflow Conditions across assembly lines
+        let isOverflowing = blocks.some(b => b.y < TOP_DANGER_Y && !b.inAir);
+        if (isOverflowing) {
+            triggerFactoryGameOver();
+        }
+    }
+
+    function triggerFactoryGameOver() {
+        gameActive = false;
+        dropGuide.style.left = "-100px";
+        dropGuide.classList.add('hidden');
+        popupText.innerText = "FACTORY OVERFLOW!\nFinal Assembly Score: " + score;
+        popupOverlay.classList.remove('hidden');
+        void popupOverlay.offsetWidth;
+        popupOverlay.classList.add('active');
+        btnRestart.classList.remove('hidden');
+    }
+
+    function renderFactoryLayout() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        // Draw Top Danger Limit Bar Layout
+        ctx.strokeStyle = "rgba(255, 71, 87, 0.4)";
+        ctx.lineWidth = 3;
+        ctx.setLineDash([8, 6]);
+        ctx.beginPath();
+        ctx.moveTo(0, TOP_DANGER_Y);
+        ctx.lineTo(canvas.width, TOP_DANGER_Y);
+        ctx.stroke();
+        ctx.setLineDash([]); // Reset line dash profiles
+
+        ctx.fillStyle = "rgba(255, 71, 87, 0.15)";
+        ctx.font = "12px sans-serif";
+        ctx.fillText("CRITICAL OVERFLOW ZONE", 15, TOP_DANGER_Y - 10);
+
+        // Draw Interactive Conveyor Line Components
+        conveyors.forEach(conv => {
+            ctx.fillStyle = "#3e3e4a";
+            ctx.fillRect(conv.x, conv.y, conv.w, conv.h);
+            
+            // Draw belt edge caps overlays
+            ctx.fillStyle = "#ff9f43";
+            ctx.fillRect(conv.x, conv.y, 6, conv.h);
+            ctx.fillRect(conv.x + conv.w - 6, conv.y, 6, conv.h);
+        });
+
+        // Draw Stacking Number Circle Blocks units
+        blocks.forEach(b => {
+            ctx.beginPath();
+            ctx.arc(b.x, b.y, b.radius, 0, Math.PI * 2);
+            ctx.fillStyle = b.color;
+            ctx.fill();
+            ctx.lineWidth = 2;
+            ctx.strokeStyle = "#ffffff";
+            ctx.stroke();
+
+            // Write active values inside blocks cleanly
+            ctx.fillStyle = "#ffffff";
+            ctx.font = "bold 16px sans-serif";
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+            ctx.fillText(b.value, b.x, b.y);
+        });
+
+        // Handle Floating Texts rendering transitions loops
+        for (let i = floatingTexts.length - 1; i >= 0; i--) {
+            let t = floatingTexts[i];
+            t.y -= 0.6;
+            t.life--;
+            ctx.fillStyle = t.color;
+            ctx.font = "bold 18px sans-serif";
+            ctx.textAlign = "center";
+            ctx.fillText(t.text, t.x, t.y);
+
+            if (t.life <= 0) floatingTexts.splice(i, 1);
+        }
+    }
+
+    function mainAssemblyLoop() {
+        if (gameActive) {
+            processBlockLogic();
+            renderFactoryLayout();
+        }
+        requestAnimationFrame(mainAssemblyLoop);
+    }
+
+    mainAssemblyLoop();
+</script>
+</body>
+</html>
