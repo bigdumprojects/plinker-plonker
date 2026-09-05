@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Plinker Plonker</title>
+<style>
+:root{
+  --violet:#24174b;--violet2:#3a2670;--violet3:#6545b1;--steel:#7f8799;--steel2:#b8bec8;
+  --black:#100d15;--field:#302f33;--gold:#f1d94f;--cyan:#4fe0e5;--green:#74dc7a;--red:#ff6868;
+}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%;font-family:Arial,Helvetica,sans-serif;background:radial-gradient(circle at 50% 8%,#545e7a 0,#252538 28%,#0b0910 75%);color:#fff}
+body{display:flex;justify-content:center;padding:18px;overflow:auto}
+button{font:inherit}
+.machine{width:min(1240px,98vw);background:linear-gradient(#b5bbc6,#7d8490);border:7px solid #5d6574;border-radius:17px;box-shadow:0 18px 60px #000b,inset 0 2px #e2e6ed;overflow:hidden}
+.frame{display:grid;grid-template-columns:210px minmax(500px,1fr) 205px;gap:9px;padding:9px}
+.panel{background:#15111f;border:4px solid #473b72;border-radius:10px;box-shadow:inset 0 0 0 2px #0b0911}
+.side{padding:9px;display:flex;flex-direction:column;gap:9px;min-height:760px}
+.coinbox,.lifebox,.infobox{background:#0f0d15;border:3px solid #67539e;border-radius:7px;padding:8px 9px;font-family:monospace}
+.coinbox{display:flex;align-items:center;justify-content:space-between}.coinbox strong{font-size:23px;color:var(--gold)}
+.lifebox strong{color:var(--cyan)}
+.infobox{font-size:11px;line-height:1.42;color:#c7bfd7}
+.avatar{height:180px;background:linear-gradient(#583a70,#202031);border:3px solid var(--cyan);border-radius:7px;display:flex;align-items:center;justify-content:center;overflow:hidden}
+.face{width:93px;height:108px;border-radius:45% 45% 48% 48%;background:#cba092;position:relative;box-shadow:inset 0 -10px #875f59}
+.hair{position:absolute;left:5px;top:8px;width:84px;height:43px;background:#5b3824;border-radius:52% 48% 35% 35%}
+.eye{position:absolute;top:55px;width:12px;height:12px;background:#1b2026;border-radius:50%}.eye.a{left:22px}.eye.b{right:22px}
+.glasses:before,.glasses:after{content:"";position:absolute;top:52px;width:34px;height:23px;border:3px solid #5d4547;border-radius:6px}.glasses:before{left:7px}.glasses:after{right:7px}.glasses span{position:absolute;left:39px;top:61px;width:15px;height:3px;background:#5d4547}
+.mouth{position:absolute;left:29px;top:82px;width:34px;height:12px;border:3px solid #603e3d;border-top:0;border-radius:0 0 30px 30px}
+.log{flex:1;min-height:150px;background:#0c0b12;border:2px solid #403652;border-radius:6px;padding:7px;overflow:auto;font:11px/1.35 monospace;color:#aaa2bb}
+.good{color:#76ec8e}.bad{color:#ff8585}.accent{color:#f2dd62}
+.main{padding:7px;background:linear-gradient(#35274c,#16111f)}
+.top{height:79px;border:4px solid #604aa1;border-radius:8px;background:linear-gradient(#3b285f,#241945);display:grid;grid-template-columns:repeat(7,1fr);overflow:hidden}
+.itemslot{position:relative;border-right:2px solid #554389;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:17px;background:linear-gradient(#3c2b60,#261b46)}
+.itemslot:last-child{border-right:0}.itemslot .n{position:absolute;top:2px;color:#f1dc5b;font-size:15px}.itemslot .icon{margin-top:12px;font-size:24px}.itemslot.locked{background:linear-gradient(#4a4054,#2c2533);color:#121116}.itemslot.locked .n{color:#e7c951}.lock{filter:grayscale(1);opacity:.8}
+.hud{display:grid;grid-template-columns:155px 1fr 165px;gap:7px;margin-top:7px}
+.box{background:#111018;border:3px solid #7459b4;border-radius:7px;padding:7px 9px}
+.money{font:700 14px monospace}.money b{font-size:22px;color:var(--gold)}
+.power .label{display:flex;justify-content:space-between;font:700 11px monospace}.meter{margin-top:5px;height:16px;border:2px solid #595d6b;background:#08080c;border-radius:7px;overflow:hidden}.meter i{display:block;height:100%;background:linear-gradient(90deg,#54dfe3,#dbf35d,#ffbe53,#f06161);width:60%;box-shadow:0 0 10px #fff8}
+.round{text-align:right;font-family:monospace}.round b{font-size:20px}.round .quota{color:#ff8a8a}.round .score{color:#b8f7ff}
+.boardwrap{position:relative;margin-top:7px}
+#board{display:block;width:100%;height:auto;aspect-ratio:1/1;border:4px solid #4f5058;border-radius:8px;background:#29282c;cursor:crosshair;box-shadow:inset 0 2px 8px #0008}
+.launchbar{display:flex;gap:8px;align-items:center;margin-top:7px}.launchbar button{border:3px solid #775fa9;border-radius:8px;padding:10px 17px;color:#fff;font-weight:900;background:linear-gradient(#42a9b0,#255e64);box-shadow:0 4px 0 #132b2d;cursor:pointer}.launchbar button:active:not(:disabled){transform:translateY(3px);box-shadow:0 1px 0 #132b2d}.launchbar button:disabled{opacity:.45;cursor:not-allowed}.tip{flex:1;text-align:center;color:#c0b8d1;font:11px monospace}
+.overlay{position:fixed;inset:0;background:#0c0813df;display:none;align-items:center;justify-content:center;z-index:50;padding:18px}.modal{width:min(870px,94vw);background:#1b152a;border:5px solid #765bb9;border-radius:13px;box-shadow:0 20px 80px #000;padding:18px}.modal h1{margin:0 0 8px;font-size:38px}.modal p{color:#c7bfd4}.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:13px}.card{background:#2a2145;border:3px solid #5b4890;border-radius:9px;padding:12px;min-height:182px;display:flex;flex-direction:column;justify-content:space-between}.card h3{margin:0;color:#fff}.card .desc{font:12px/1.4 monospace;color:#d4cedf}.buy{display:flex;justify-content:space-between;align-items:center;gap:8px}.buy button{border:0;border-radius:7px;padding:8px 11px;font-weight:900;background:#5bb76e;color:#fff;cursor:pointer}.buy button:disabled{opacity:.45;cursor:not-allowed}.close{display:block;margin:13px 0 0 auto;border:3px solid #7459a7;border-radius:8px;background:#27686e;color:#fff;font-weight:900;padding:9px 15px;cursor:pointer}
+.titleScreen{position:fixed;inset:0;background:radial-gradient(circle at 50% 20%,#453960,#0a0810 70%);display:flex;align-items:center;justify-content:center;z-index:60;padding:15px}.titleCard{width:min(730px,94vw);background:#1d1730;border:6px solid #7257b3;border-radius:16px;box-shadow:0 20px 80px #000;padding:34px;text-align:center}.titleCard h1{margin:0;font-size:70px;letter-spacing:-4px}.titleCard h2{margin:4px 0 25px;color:#b4abca;font-weight:400}.start{border:0;border-radius:10px;padding:14px 31px;background:#4eaa64;color:white;font-size:21px;font-weight:900;cursor:pointer}.small{font:11px monospace;color:#8c849a;margin-top:14px}
+@media(max-width:980px){.frame{grid-template-columns:1fr}.side{min-height:0}.avatar{height:100px}.log{max-height:160px}.hud{grid-template-columns:1fr}.cards{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="titleScreen" id="titleScreen"><div class="titleCard"><h1>PLINKER PLONKER</h1><h2>Welcome aboard. Your job is to make BIG numbers.</h2><button class="start" id="start">START SHIFT</button><div class="small">A browser recreation inspired by the visual layout and gameplay loop of Nubby's Number Factory.</div></div></div>
+
+<div class="machine">
+  <div class="frame">
+    <aside class="panel side">
+      <div class="coinbox"><span>COINS</span><strong id="coins">4</strong></div>
+      <div class="lifebox">NUBBIES LEFT: <strong id="nubbies">7</strong></div>
+      <div class="avatar"><div class="face"><div class="hair"></div><i class="eye a"></i><i class="eye b"></i><div class="glasses"><span></span></div><div class="mouth"></div></div></div>
+      <div class="infobox" id="status">Launch Plinky into the peg board. Every collision pops the peg and scores its current number.</div>
+      <div class="log" id="log"></div>
+    </aside>
+
+    <main class="panel main">
+      <div class="top" id="items"></div>
+      <div class="hud">
+        <div class="box money">FACTORY TOTAL<br><b id="total">0</b></div>
+        <div class="box power"><div class="label"><span>LAUNCH POWER</span><span id="powerPct">60%</span></div><div class="meter"><i id="powerBar"></i></div></div>
+        <div class="box round"><b id="round">ROUND 1</b><br><span class="quota">QUOTA <span id="quota">12</span></span><br><span class="score">SCORE <span id="score">0</span></span></div>
+      </div>
+      <div class="boardwrap"><canvas id="board" width="700" height="700"></canvas></div>
+      <div class="launchbar"><button id="launch">LAUNCH</button><button id="shop" disabled>SHOP</button><div class="tip">Move to aim • drag vertically for power • click LAUNCH</div></div>
+    </main>
+
+    <aside class="panel side">
+      <div class="infobox"><b>SHIFT</b><br><span id="shiftText">7 launches this round.</span></div>
+      <div class="infobox"><b>RESTOCK</b><br>Clear quota and the board refills with bigger pegs. Higher rounds mean bigger numbers.</div>
+      <div class="infobox"><b>POP</b><br>Each hit scores the peg's current value, then halves it. When a peg reaches zero it disappears.</div>
+      <div class="infobox"><b>FACTORY MART</b><br>Shop for strange equipment between milestones. Items stay with you for the run.</div>
+      <div class="infobox"><b>LOOT</b><br>Numbers climb through powers of two: 1 → 2 → 4 → 8 → 16 → 32 → …</div>
+    </aside>
+  </div>
+</div>
+
+<div class="overlay" id="shopOverlay"><div class="modal"><h1>NUBBY-MART → PLONKER-MART</h1><p>Choose one item. The real game has many possible items; this prototype uses an original small set with similar trigger-style behavior.</p><div class="cards" id="cards"></div><button class="close" id="closeShop">DONE</button></div></div>
+<div class="overlay" id="endOverlay"><div class="modal"><h1 id="endTitle"></h1><p id="endText"></p><button class="close" id="restart">NEW SHIFT</button></div></div>
+
+<script>
+(()=>{
+const canvas=document.getElementById('board'),ctx=canvas.getContext('2d');
+const W=canvas.width,H=canvas.height,$=id=>document.getElementById(id);
+const colors={1:'#4f9ed8',2:'#da6f36',4:'#f4d83e',8:'#5fdc65',16:'#44cfc3',32:'#4c92f0',64:'#7358df',128:'#b754d4',256:'#e75c91',512:'#ed6b48'};
+const defs=[
+ {id:'spring',name:'SPRING SHOES',icon:'⟡',cost:5,desc:'Every 4th peg pop gives +50% bonus points.',apply:s=>s.items.spring=true},
+ {id:'cactus',name:'TINY CACTUS',icon:'♣',cost:6,desc:'Every 5th pop also chips a random peg for free.',apply:s=>s.items.cactus=true},
+ {id:'juice',name:'BIG-NUMBER JUICE',icon:'◉',cost:7,desc:'Your next launch gets a 2× score multiplier. One use.',apply:s=>s.items.juice++},
+ {id:'magnet',name:'MAGNET',icon:'✦',cost:8,desc:'Every launch pulls the first collision slightly toward the center.',apply:s=>s.items.magnet=true},
+ {id:'extra',name:'EXTRA PLONKER',icon:'+',cost:10,desc:'Gain one extra launch next round.',apply:s=>s.items.extra=true},
+ {id:'doubler',name:'DOUBLER CHIP',icon:'2×',cost:12,desc:'15% chance each launch to double all points scored.',apply:s=>s.items.doubler=true}
+];
+const state={round:1,score:0,total:0,coins:4,quota:12,balls:7,active:true,ball:null,power:.6,aimX:W/2,items:{},pops:0,board:[],shopOpen:false,shopQueued:false,runRng:Date.now()>>>0,popFlash:0};
+function rand(){state.runRng=(state.runRng*1664525+1013904223)>>>0;return state.runRng/4294967296}
+function fmt(n){if(n>=1e12)return (n/1e12).toFixed(1)+'T';if(n>=1e9)return (n/1e9).toFixed(1)+'B';if(n>=1e6)return (n/1e6).toFixed(1)+'M';if(n>=1e3)return (n/1e3).toFixed(1)+'K';return Math.floor(n).toString()}
+function log(msg,cls=''){const e=document.createElement('div');if(cls)e.className=cls;e.textContent=msg;$('log').appendChild(e);$('log').scrollTop=$('log').scrollHeight}
+function pegColor(v){const keys=Object.keys(colors).map(Number);let k=keys.find(x=>x===v);if(k)return colors[k];if(v<1)return '#555';const idx=Math.max(0,Math.min(keys.length-1,Math.log2(v)-1));return Object.values(colors)[idx]}
+const slots=[
+ {x:150,y:190},{x:350,y:190},{x:550,y:190},
+ {x:100,y:330},{x:225,y:330},{x:350,y:330},{x:475,y:330},{x:600,y:330},
+ {x:100,y:470},{x:225,y:470},{x:350,y:470},{x:475,y:470},{x:600,y:470},
+ {x:100,y:610},{x:225,y:610},{x:350,y:610},{x:475,y:610},{x:600,y:610},
+ {x:225,y:92},{x:475,y:92},{x:350,y:92}
+];
+function makeBoard(){
+ const scale=Math.pow(2,Math.floor((state.round-1)/4));
+ state.board=slots.map((p,i)=>({x:p.x,y:p.y,value:0,pulse:0,ghost:false}));
+ const base=[1,1,2,2,1,2,4,2,1,2,2,4,1,2,2,4,1,1,2,2,4];
+ state.board.forEach((p,i)=>{let v=base[i]*scale;if(state.round>1 && rand()<.16)v*=2;if(state.round>6 && rand()<.08)v*=4;p.value=v});
+ mergeBoard();
+}
+function mergeBoard(){
+ const by={};state.board.filter(p=>p.value>0).forEach(p=>(by[p.value]??=[]).push(p));
+ Object.values(by).forEach(arr=>{while(arr.length>=2){arr[1].value=0;arr[1].ghost=true;arr[0].value*=2;arr.splice(0,2)}});
+}
+function drawBg(){
+ ctx.fillStyle='#2c2b30';ctx.fillRect(0,0,W,H);
+ const g=ctx.createLinearGradient(0,0,0,H);g.addColorStop(0,'#3b3940');g.addColorStop(1,'#242328');ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+ for(let i=0;i<900;i++){const x=rand()*W,y=rand()*H,a=.015+rand()*.05;ctx.fillStyle=`rgba(255,255,255,${a})`;ctx.fillRect(x,y,1,1)}
+ // top launcher recess
+ ctx.fillStyle='#1a1720';ctx.fillRect(280,18,140,72);ctx.strokeStyle='#5b5365';ctx.lineWidth=3;ctx.strokeRect(280,18,140,72);
+ // reserve nubbies
+ for(let i=0;i<6;i++){const x=382+i*38,y=112;const r=11;const gr=ctx.createRadialGradient(x-3,y-4,1,x,y,r);gr.addColorStop(0,'#eef6ff');gr.addColorStop(1,'#66758f');ctx.fillStyle=gr;ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);ctx.fill()}
+ // holes
+ state.board.forEach(p=>{ctx.fillStyle='#1a181d';ctx.fillRect(p.x-28,p.y-28,56,56)})
+}
+function drawPeg(p){if(p.value<=0)return;const r=25,c=pegColor(p.value);const gr=ctx.createRadialGradient(p.x-8,p.y-9,3,p.x,p.y,r);gr.addColorStop(0,'#fff');gr.addColorStop(.07,c);gr.addColorStop(1,'#121118');ctx.shadowColor=c;ctx.shadowBlur=12+p.pulse*13;ctx.fillStyle=gr;ctx.beginPath();ctx.arc(p.x,p.y,r,0,Math.PI*2);ctx.fill();ctx.shadowBlur=0;ctx.strokeStyle='#111016';ctx.lineWidth=2;ctx.stroke();ctx.fillStyle='#fff';ctx.font='900 21px Arial';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(fmt(p.value),p.x,p.y+1)}
+function drawAim(){if(state.ball)return;const sx=W/2,sy=84,tx=state.aimX,ty=H-25,ang=Math.atan2(ty-sy,tx-sx),len=135+state.power*175;ctx.setLineDash([5,9]);ctx.strokeStyle='rgba(255,255,255,.65)';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(sx,sy);ctx.lineTo(sx+Math.cos(ang)*len,sy+Math.sin(ang)*len);ctx.stroke();ctx.setLineDash([]);const hx=sx+Math.cos(ang)*len,hy=sy+Math.sin(ang)*len;ctx.fillStyle='#fff';ctx.beginPath();ctx.moveTo(hx,hy);ctx.lineTo(hx-Math.cos(ang-.45)*14,hy-Math.sin(ang-.45)*14);ctx.lineTo(hx-Math.cos(ang+.45)*14,hy-Math.sin(ang+.45)*14);ctx.closePath();ctx.fill()}
+function drawBall(){if(!state.ball)return;const b=state.ball;const gr=ctx.createRadialGradient(b.x-5,b.y-7,2,b.x,b.y,17);gr.addColorStop(0,'#fbffff');gr.addColorStop(.35,'#9ebff0');gr.addColorStop(1,'#33405b');ctx.shadowColor='#67e8ff';ctx.shadowBlur=13;ctx.fillStyle=gr;ctx.beginPath();ctx.arc(b.x,b.y,17,0,Math.PI*2);ctx.fill();ctx.shadowBlur=0;if(b.history.length>1){ctx.strokeStyle='rgba(255,255,255,.25)';ctx.lineWidth=2;ctx.beginPath();for(let i=0;i<b.history.length;i++){const q=b.history[i];if(i===0)ctx.moveTo(q.x,q.y);else ctx.lineTo(q.x,q.y)}ctx.stroke()}}
+function render(){
+ drawBg();drawAim();state.board.forEach(drawPeg);drawBall();
+ $('coins').textContent=fmt(state.coins);$('nubbies').textContent=state.balls;$('total').textContent=fmt(state.total);$('round').textContent='ROUND '+state.round;$('quota').textContent=fmt(state.quota);$('score').textContent=fmt(state.score);$('powerPct').textContent=Math.round(state.power*100)+'%';$('powerBar').style.width=(state.power*100)+'%';$('shiftText').textContent=`${state.balls} launches left this round.`;
+ $('launch').disabled=!!state.ball||state.shopOpen||!state.active||state.balls<=0;
+ const bar=$('items');bar.innerHTML='';for(let i=0;i<7;i++){const s=document.createElement('div');s.className='itemslot'+(i>=4?' locked':'');s.innerHTML=`<span class="n">${i+1}</span><span class="icon">${i<4&&state.items.order?.[i]?state.items.order[i].icon:(i>=4?'🔒':'')}</span>`;bar.appendChild(s)}
+ if(state.score>=state.quota)$('status').innerHTML=`<b>QUOTA READY!</b><br>You have made ${fmt(state.score)} against a quota of ${fmt(state.quota)}. Finish your remaining launches to overproduce.`;else $('status').innerHTML=`Launch Plinky into the peg board. Every collision pops the peg and scores its current number.`
+}
+function popPeg(p,mult=1){if(p.value<=0)return;let gained=Math.round(p.value*mult);if(state.items.doubler&&rand()<.15){gained*=2;log('DOUBLER CHIP activated!','accent')}if(state.items.spring&&state.pops>0&&state.pops%4===0)gained=Math.round(gained*1.5);state.score+=gained;state.total+=gained;state.pops++;p.pulse=1;const old=p.value;p.value=Math.floor(p.value/2);log(`Pop ${fmt(old)} → +${fmt(gained)}`,'good');if(state.items.cactus&&state.pops%5===0)bonusChip();if(p.value===0)p.ghost=true;return gained}
+function bonusChip(){const alive=state.board.filter(p=>p.value>0);if(!alive.length)return;const p=alive[Math.floor(rand()*alive.length)];setTimeout(()=>popPeg(p,.75),70);log('Tiny Cactus chipped a random peg.','accent')}
+function launch(){if(state.ball||state.shopOpen||!state.active||state.balls<=0)return;state.balls--;let mult=1;if(state.items.juice>0){mult=2;state.items.juice--;log('BIG-NUMBER JUICE!','accent')}const sx=W/2,sy=84,tx=state.aimX,ty=H,ang=Math.atan2(ty-sy,tx-sx),speed=6.3+state.power*7.5;state.ball={x:sx,y:sy,vx:Math.cos(ang)*speed,vy:Math.sin(ang)*speed,mult,history:[]};log('Plinky launched.')}
+function step(){if(state.ball){const b=state.ball;b.history.push({x:b.x,y:b.y});if(b.history.length>10)b.history.shift();b.x+=b.vx;b.y+=b.vy;b.vy+=.18;b.vx*=.998;b.vy*=.999;if(b.x<19){b.x=19;b.vx=Math.abs(b.vx)*.93}if(b.x>W-19){b.x=W-19;b.vx=-Math.abs(b.vx)*.93}
+ for(const p of state.board){if(p.value<=0)continue;const d=Math.hypot(b.x-p.x,b.y-p.y);if(d<39){if(state.items.magnet){const cx=W/2-b.x;b.vx+=cx*.002}popPeg(p,b.mult);const nx=b.x-p.x,ny=b.y-p.y,dd=Math.max(1,Math.hypot(nx,ny)),ux=nx/dd,uy=ny/dd,dot=b.vx*ux+b.vy*uy;b.vx-=2*dot*ux;b.vy-=2*dot*uy;b.x=p.x+ux*39;b.y=p.y+uy*39;b.vx*=.89;b.vy*=.89;break}}
+ if(b.y>H+30)finishLaunch();}
+ state.board.forEach(p=>{p.pulse*=.88;if(p.pulse<.02)p.pulse=0});render();requestAnimationFrame(step)}
+function finishLaunch(){state.ball=null;log(`Launch finished — ${fmt(state.score)} / ${fmt(state.quota)}.`);if(state.balls>0){render();return}finishRound()}
+function finishRound(){
+ if(state.score>=state.quota){const ratio=state.score/state.quota;const payout=Math.max(1,Math.floor(ratio*2));state.coins+=payout;log(`QUOTA MET! +${payout} coins.`,'good');restock();
+   state.round++;state.quota=Math.ceil(state.quota*1.42+4);state.balls=state.items.extra?8:7;if(state.items.extra){state.items.extra=false;log('Extra Plonker added a bonus launch.','accent')}
+   if(state.round%5===0)state.shopQueued=true;
+   if(state.shopQueued&&!state.shopOpen){state.shopQueued=false;setTimeout(openShop,500)}
+ }else{lose()}
+ render();
+}
+function restock(){const fill=Math.pow(2,Math.floor((state.round-1)/3));for(let i=0;i<state.board.length;i++){const p=state.board[i];if(p.value<=0){p.value=fill*(rand()<.22?2:1);p.ghost=false}}mergeBoard();log('RESTOCK complete. The factory is full again.','accent')}
+function openShop(){if(!state.active||state.ball)return;state.shopOpen=true;$('shopOverlay').style.display='flex';$('cards').innerHTML='';const picks=[...defs].sort(()=>rand()-.5).slice(0,3);picks.forEach(d=>{const c=document.createElement('div');c.className='card';c.innerHTML=`<h3>${d.icon} ${d.name}</h3><div class="desc">${d.desc}</div><div class="buy"><b>${d.cost} coins</b><button ${state.coins<d.cost?'disabled':''}>BUY</button></div>`;c.querySelector('button').onclick=()=>{if(state.coins<d.cost)return;state.coins-=d.cost;d.apply(state);state.items.order??=[];state.items.order.push(d);c.querySelector('button').disabled=true;c.querySelector('button').textContent='BOUGHT';log(`Bought ${d.name}.`,'accent');render()};$('cards').appendChild(c)})}
+function closeShop(){$('shopOverlay').style.display='none';state.shopOpen=false;log(`Back to work — Round ${state.round}.`,'accent');render()}
+function lose(){state.active=false;$('endTitle').textContent='SHIFT FAILED';$('endText').textContent=`The quota was ${fmt(state.quota)}, but the factory finished the round at ${fmt(state.score)}. Total produced: ${fmt(state.total)}.`;$('endOverlay').style.display='flex'}
+function reset(){Object.assign(state,{round:1,score:0,total:0,coins:4,quota:12,balls:7,active:true,ball:null,power:.6,aimX:W/2,items:{order:[]},pops:0,shopOpen:false,shopQueued:false,runRng:Date.now()>>>0});$('log').innerHTML='';makeBoard();log('Welcome to Plinker Plonker.','accent');log('Seven launches. One quota. Make the number BIG.');render()}
+let drag=false;canvas.addEventListener('mousemove',e=>{const r=canvas.getBoundingClientRect();state.aimX=Math.max(30,Math.min(W-30,(e.clientX-r.left)*W/r.width));if(drag){const y=(e.clientY-r.top)*H/r.height;state.power=Math.max(.12,Math.min(.98,1-y/H))}render()});canvas.addEventListener('mousedown',()=>drag=true);window.addEventListener('mouseup',()=>drag=false);
+$('launch').onclick=launch;$('shop').onclick=openShop;$('closeShop').onclick=closeShop;$('restart').onclick=()=>{$('endOverlay').style.display='none';reset()};$('start').onclick=()=>{$('titleScreen').style.display='none';reset()};
+makeBoard();render();requestAnimationFrame(step);
+})();
+</script>
+</body>
+</html>
