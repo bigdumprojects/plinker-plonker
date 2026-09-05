@@ -1,0 +1,267 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Plinker Plonker</title>
+<style>
+  :root{
+    --panel:#1a1630; --panel2:#262044; --purple:#6847bd; --purple2:#8a6ce0;
+    --cyan:#61e6eb; --green:#67d66a; --yellow:#f5db58; --red:#ef5f5f; --ink:#171320;
+    --steel:#8f93a7; --dark:#100d18; --field:#312f33;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:radial-gradient(circle at 50% 0,#3d4564 0,#171722 52%,#0a0910 100%);color:#fff;font-family:Arial,Helvetica,sans-serif;min-height:100vh;display:flex;align-items:center;justify-content:center;overflow:auto}
+  .app{width:min(1240px,96vw);margin:18px auto;background:#9aa0ad;border:7px solid #646b7b;border-radius:18px;box-shadow:0 16px 55px #0009,inset 0 2px 0 #dbe0ea;overflow:hidden}
+  .machine{display:grid;grid-template-columns:235px minmax(470px,1fr) 215px;gap:10px;padding:10px;background:linear-gradient(#aeb4c0,#7d8490)}
+  .side,.main{background:#171323;border:4px solid #463d6c;border-radius:10px;box-shadow:inset 0 0 0 2px #0d0a14}
+  .side{padding:9px;display:flex;flex-direction:column;gap:10px;min-height:720px}
+  .topbar{height:78px;background:#2c214a;border:4px solid #6249a5;border-radius:8px;display:grid;grid-template-columns:repeat(7,1fr);overflow:hidden}
+  .slot{border-right:2px solid #5b478e;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:18px;position:relative;background:linear-gradient(#37265a,#22193b)}
+  .slot:last-child{border-right:0}.slot.locked{background:linear-gradient(#4d435c,#292432);color:#16151a}.slot .mini{font-size:11px;position:absolute;bottom:4px;opacity:.65}.lock{font-size:23px;filter:grayscale(1)}
+  .main{padding:8px;background:linear-gradient(#3a2b52,#171323);display:flex;flex-direction:column;gap:8px}
+  .info-strip{display:grid;grid-template-columns:180px 1fr 180px;gap:8px;align-items:stretch}
+  .readout,.roundbox{background:#12101b;border:3px solid #795dbd;border-radius:7px;padding:6px 10px;font-family:monospace;font-weight:800}
+  .readout{display:flex;justify-content:space-between;align-items:center;font-size:16px}.readout b{color:var(--yellow);font-size:21px}.roundbox{text-align:right}.roundbox .r{font-size:21px}.roundbox .q{color:#ff8a8a}.roundbox .s{font-size:15px;color:#b9f5ff}
+  .power{background:#10101a;border:3px solid #795dbd;border-radius:7px;padding:6px 10px}.power .label{display:flex;justify-content:space-between;font-family:monospace;font-size:12px}.meter{height:15px;margin-top:4px;background:#07070c;border:2px solid #565b6d;border-radius:6px;overflow:hidden}.meter i{display:block;height:100%;width:60%;background:linear-gradient(90deg,#5ce4e8,#dff75d,#ffbb51,#ef5858);box-shadow:0 0 9px #fff8}
+  canvas{width:100%;height:auto;aspect-ratio: 680 / 680;display:block;background:#2a282d;border:4px solid #4b4b54;border-radius:8px;image-rendering:auto;cursor:crosshair}
+  .controls{display:flex;gap:8px;align-items:center}.controls button,.action{border:3px solid #7562a6;background:linear-gradient(#41a4ad,#23646a);color:white;font-weight:900;padding:10px 14px;border-radius:8px;cursor:pointer;box-shadow:0 4px 0 #122b2d}.controls button:active,.action:active{transform:translateY(3px);box-shadow:0 1px 0 #122b2d}.controls button:disabled{opacity:.45;cursor:not-allowed}
+  .hint{flex:1;text-align:center;font:12px monospace;color:#c8c0da}
+  .coin,.lives,.status,.shop-title{background:#111018;border:3px solid #67539f;border-radius:8px;padding:8px}.coin{display:flex;justify-content:space-between;align-items:center}.coin b{color:#f3d84f;font-size:24px}.lives b{color:#7df0ff}.status{font-size:12px;line-height:1.35;color:#d9d2e7}
+  .avatar{height:170px;background:linear-gradient(#5a3e73,#202132);border:3px solid #44dce4;border-radius:8px;display:flex;align-items:center;justify-content:center;overflow:hidden;position:relative}.avatar .face{width:98px;height:110px;background:#c79b8d;border-radius:44% 44% 48% 48%;position:relative;box-shadow:inset 0 -9px 0 #8c645e}.avatar .hair{position:absolute;top:18px;width:85px;height:42px;border-radius:50% 50% 30% 30%;background:#5b3a25}.eye{position:absolute;top:54px;width:12px;height:12px;border-radius:50%;background:#20242a}.eye.l{left:25px}.eye.r{right:25px}.mouth{position:absolute;left:31px;top:81px;width:38px;height:12px;border:3px solid #5f3d3b;border-top:0;border-radius:0 0 30px 30px}
+  .logs{flex:1;overflow:auto;background:#0e0c15;border:2px solid #433a5e;padding:7px;font:11px/1.35 monospace;color:#b6b2c5;border-radius:6px}.good{color:#75ef91}.bad{color:#ff8888}.accent{color:#f3de58}
+  .overlay{position:fixed;inset:0;background:#0d0814c9;display:none;align-items:center;justify-content:center;padding:20px;z-index:20}.modal{width:min(960px,94vw);background:#1b152c;border:5px solid #785dbf;border-radius:14px;box-shadow:0 20px 70px #000; padding:18px}.modal h1{margin:0 0 10px;font-size:34px}.modal-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.card{background:#292143;border:3px solid #5d4b94;padding:12px;border-radius:10px;min-height:155px;display:flex;flex-direction:column;justify-content:space-between}.card h3{margin:0}.card p{font:12px/1.4 monospace;color:#d8d3df}.card button{background:#55b46b;border:0;border-radius:7px;padding:9px;font-weight:900;cursor:pointer}.tiny{font-size:11px;color:#aaa0bf}
+  .screen{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:radial-gradient(circle,#403761,#0b0911 65%);z-index:30}.title{width:min(700px,92vw);text-align:center;background:#1c1730;border:6px solid #7055b5;border-radius:18px;padding:30px;box-shadow:0 20px 70px #000}.title h1{font-size:64px;margin:0 0 8px;letter-spacing:-3px}.title .sub{color:#b2a8cb;margin-bottom:24px}.title button{font-size:22px;background:#49aa63;color:white;border:0;padding:14px 32px;border-radius:10px;font-weight:900;cursor:pointer}.title .note{margin-top:16px;font:12px monospace;color:#8d849b}
+  @media(max-width:1000px){.machine{grid-template-columns:1fr}.side{min-height:unset}.avatar{height:110px}.logs{max-height:180px}.info-strip{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="screen" id="titleScreen"><div class="title"><h1>PLINKER PLONKER</h1><div class="sub">A number-factory plinko roguelite prototype</div><button id="startBtn">START SHIFT</button><div class="note">Original HTML/JS implementation inspired by the documented mechanics of Nubby's Number Factory.</div></div></div>
+<div class="app">
+  <div class="machine">
+    <aside class="side">
+      <div class="coin"><span>COINS</span><b id="coins">0</b></div>
+      <div class="lives">NUBBIES LEFT: <b id="lives">3</b></div>
+      <div class="avatar"><div class="face"><div class="hair"></div><i class="eye l"></i><i class="eye r"></i><div class="mouth"></div></div></div>
+      <div class="status" id="status">Click the board to aim. Release to launch Plinky.</div>
+      <div class="logs" id="logs"></div>
+    </aside>
+
+    <main class="main">
+      <div class="topbar" id="topbar"></div>
+      <div class="info-strip">
+        <div class="readout"><span>FACTORY TOTAL</span><b id="total">0</b></div>
+        <div class="power"><div class="label"><span>PLONKER POWER</span><span id="powerPct">60%</span></div><div class="meter"><i id="powerBar"></i></div></div>
+        <div class="roundbox"><div class="r" id="round">ROUND 1</div><div class="q">QUOTA <span id="quota">10</span></div><div class="s">SCORE <span id="score">0</span></div></div>
+      </div>
+      <canvas id="board" width="680" height="680"></canvas>
+      <div class="controls"><button id="launch">LAUNCH</button><button id="shop" disabled>FACTORY MART</button><div class="hint">Move the mouse to aim • click/drag to adjust power • LAUNCH to fire</div></div>
+    </main>
+
+    <aside class="side">
+      <div class="shop-title"><b>SHIFT CONSOLE</b></div>
+      <div class="status"><b>How it works</b><br>Hit numbered pegs to score. A peg gives its current value, then halves. Empty pegs disappear. Beat quota to restock and earn a coin.</div>
+      <div class="status"><b>Board rules</b><br>21 peg slots • powers of two • one merge pass on restock • full-board clear doubles the round score.</div>
+      <div class="status"><b>Prototype items</b><br>Pants = every 10 pops, pop a random peg for double points.<br>Cactus = every 5 pops, bonus random peg pop.<br>Double Trouble = 25% chance each launch to double launch score.</div>
+      <div class="status"><b>Controls</b><br>Mouse only. The board is built with Canvas, so it runs directly in a browser without a framework.</div>
+    </aside>
+  </div>
+</div>
+
+<div class="overlay" id="shopOverlay"><div class="modal"><h1>FACTORY MART</h1><div class="tiny">A few original items based on the shop concept. Purchases persist for this run.</div><div class="modal-grid" id="shopCards"></div><div style="margin-top:14px;text-align:right"><button class="action" id="closeShop">CONTINUE</button></div></div></div>
+<div class="overlay" id="endOverlay"><div class="modal"><h1 id="endTitle">SHIFT OVER</h1><div id="endText"></div><div style="margin-top:14px;text-align:right"><button class="action" id="restart">NEW SHIFT</button></div></div></div>
+
+<script>
+(() => {
+  const canvas = document.getElementById('board');
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+  const $ = id => document.getElementById(id);
+
+  const state = {
+    round:1, score:0, total:0, coins:4, lives:3, quota:10, active:true,
+    pops:0, power:.60, aimingX:W/2, ball:null, board:[], items:[],
+    shopOpen:false, rngSeed:Date.now(), runScore:0
+  };
+
+  const itemDefs = [
+    {name:'PANTS',cost:5,desc:'Every 10 pegs popped, a random peg is popped for 2x points.',apply(){state.items.push('pants');}},
+    {name:'CACTUS',cost:6,desc:'Every 5 pegs popped, a bonus random peg is popped.',apply(){state.items.push('cactus');}},
+    {name:'DOUBLE TROUBLE',cost:8,desc:'25% chance for each launch to double all score earned by that Nubby.',apply(){state.items.push('double');}},
+    {name:'LIFE CHIP',cost:11,desc:'Gain +1 Nubby life immediately.',apply(){state.lives++;}},
+    {name:'BIG NUMBER JUICE',cost:9,desc:'Your next 3 launches start with a 20% score bonus.',apply(){state.items.push('juice');}}
+  ];
+
+  function log(msg,cls=''){ const d=document.createElement('div'); d.className=cls; d.textContent='› '+msg; $('logs').prepend(d); while($('logs').children.length>80)$('logs').lastChild.remove(); }
+  function fmt(n){ return Math.floor(n).toLocaleString(); }
+  function clamp(v,a,b){ return Math.max(a,Math.min(b,v)); }
+  function rand(){ state.rngSeed=(state.rngSeed*1664525+1013904223)>>>0; return state.rngSeed/4294967296; }
+
+  // 21 slots, arranged in staggered rows like the documented board structure.
+  const slotLayout = [];
+  const rows=[4,4,4,4,5];
+  let sy=140;
+  rows.forEach((count,r)=>{
+    const y=sy+r*94, step=105, start=(W-(count-1)*step)/2;
+    for(let i=0;i<count;i++) slotLayout.push({x:start+i*step,y});
+  });
+
+  function pegColor(v){
+    const p = Math.max(0, Math.log2(v));
+    const palette=['#f17b55','#f0be49','#66c75f','#43b3c8','#587be6','#7b62d6','#c557bd','#e76591'];
+    return palette[p%palette.length];
+  }
+  function makeBoard(){
+    state.board=slotLayout.map((p,i)=>({id:i,x:p.x,y:p.y,value: Math.pow(2, Math.floor(state.round/5)), popped:false, pulse:0}));
+    // Early-game variety like the game's low-number opening boards.
+    if(state.round===1){state.board.forEach((p,i)=>{p.value=[1,1,2,2,1,2,1,2,4,1,1,2,2,1,1,2,2,1,1,2,2][i];});}
+    else {
+      state.board.forEach(p=>{ const vals=[1,1,2,2,4,4]; p.value=vals[Math.floor(rand()*vals.length)] * Math.pow(2,Math.floor((state.round-1)/5)); });
+    }
+  }
+
+  function drawMachineBackdrop(){
+    ctx.fillStyle='#2d2c31';ctx.fillRect(0,0,W,H);
+    const g=ctx.createLinearGradient(0,0,W,H);g.addColorStop(0,'#39363d');g.addColorStop(.55,'#29272c');g.addColorStop(1,'#242227');ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+    for(let i=0;i<180;i++){const x=rand()*W,y=rand()*H,r=rand()*1.4;ctx.fillStyle=`rgba(255,255,255,${.02+rand()*.08})`;ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);ctx.fill();}
+    // dark recesses behind pegs
+    state.board.forEach(p=>{ctx.fillStyle='#19171c';ctx.fillRect(p.x-25,p.y-25,50,50);});
+    // top slot / muzzle
+    ctx.fillStyle='#1b1820';ctx.fillRect(270,22,140,68);ctx.strokeStyle='#534c59';ctx.lineWidth=4;ctx.strokeRect(270,22,140,68);
+    ctx.fillStyle='#5ee3e8';ctx.font='bold 18px monospace';ctx.textAlign='center';ctx.fillText('PLINKY',W/2,46);
+    ctx.fillStyle='#9089a0';ctx.font='12px monospace';ctx.fillText('AIM & LAUNCH',W/2,68);
+  }
+
+  function drawPeg(p){
+    if(p.popped && p.value<=0)return;
+    const r=24;
+    const val=p.value;
+    const grad=ctx.createRadialGradient(p.x-8,p.y-10,3,p.x,p.y,r);
+    grad.addColorStop(0,'#ffffff');grad.addColorStop(.08,pegColor(val));grad.addColorStop(1,'#111017');
+    ctx.shadowColor=pegColor(val);ctx.shadowBlur=11+p.pulse*10;ctx.fillStyle=grad;ctx.beginPath();ctx.arc(p.x,p.y,r,0,Math.PI*2);ctx.fill();ctx.shadowBlur=0;
+    ctx.lineWidth=2;ctx.strokeStyle='#15131a';ctx.stroke();
+    ctx.fillStyle='#fff';ctx.font='bold 21px Arial';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(val,p.x,p.y+1);
+  }
+
+  function drawBall(){
+    if(!state.ball)return;
+    const b=state.ball;
+    const g=ctx.createRadialGradient(b.x-5,b.y-7,2,b.x,b.y,17);g.addColorStop(0,'#f0f8ff');g.addColorStop(.35,'#8fb6ef');g.addColorStop(1,'#31394d');
+    ctx.shadowColor='#79e8ff';ctx.shadowBlur=12;ctx.fillStyle=g;ctx.beginPath();ctx.arc(b.x,b.y,17,0,Math.PI*2);ctx.fill();ctx.shadowBlur=0;
+    if(b.trail){ctx.strokeStyle='rgba(240,250,255,.5)';ctx.setLineDash([3,7]);ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(b.x,b.y);ctx.lineTo(b.x-b.vx*18,b.y-b.vy*18);ctx.stroke();ctx.setLineDash([]);}
+  }
+
+  function drawAim(){
+    if(state.ball)return;
+    const sx=W/2, sy=94, tx=state.aimingX, ty=H-30;
+    const dx=tx-sx, ang=Math.atan2(ty-sy,dx);
+    const len=130+state.power*160;
+    ctx.setLineDash([5,8]);ctx.strokeStyle='rgba(255,255,255,.6)';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(sx,sy);ctx.lineTo(sx+Math.cos(ang)*len,sy+Math.sin(ang)*len);ctx.stroke();ctx.setLineDash([]);
+    const hx=sx+Math.cos(ang)*len,hy=sy+Math.sin(ang)*len;ctx.fillStyle='rgba(255,255,255,.9)';ctx.beginPath();ctx.moveTo(hx,hy);ctx.lineTo(hx-Math.cos(ang-.45)*14,hy-Math.sin(ang-.45)*14);ctx.lineTo(hx-Math.cos(ang+.45)*14,hy-Math.sin(ang+.45)*14);ctx.closePath();ctx.fill();
+  }
+
+  function render(){
+    drawMachineBackdrop();drawAim();state.board.forEach(drawPeg);drawBall();
+    $('coins').textContent=fmt(state.coins);$('lives').textContent=state.lives;$('round').textContent='ROUND '+state.round;$('quota').textContent=fmt(state.quota);$('score').textContent=fmt(state.score);$('total').textContent=fmt(state.total);$('powerPct').textContent=Math.round(state.power*100)+'%';$('powerBar').style.width=(state.power*100)+'%';
+    $('launch').disabled=!!state.ball || state.shopOpen || !state.active;
+    const slots=$('topbar'); slots.innerHTML='';
+    for(let i=0;i<7;i++){const s=document.createElement('div');s.className='slot'+(i>=4?' locked':'');s.innerHTML=i<state.items.length?`<span>${state.items[i][0].toUpperCase()}</span><span class="mini">ITEM</span>`:(i>=4?'<span class="lock">🔒</span>':`<span>${i+1}</span>`);slots.appendChild(s);}
+  }
+
+  function pointToPeg(b,p){ return Math.hypot(b.x-p.x,b.y-p.y)<35; }
+  function popPeg(p,mult=1){
+    if(p.value<=0)return 0;
+    const gained=Math.round(p.value*mult);
+    state.score+=gained;state.total+=gained;state.pops++;p.value=Math.floor(p.value/2);p.pulse=1;
+    log(`Peg popped for +${fmt(gained)}.`,'good');
+    if(p.value===0)p.popped=true;
+    if(state.pops%10===0 && state.items.includes('pants')) bonusRandomPeg(2);
+    if(state.pops%5===0 && state.items.includes('cactus')) bonusRandomPeg(1);
+    return gained;
+  }
+  function bonusRandomPeg(mult){ const alive=state.board.filter(p=>p.value>0);if(!alive.length)return;const p=alive[Math.floor(rand()*alive.length)];setTimeout(()=>popPeg(p,mult),80); }
+
+  function launch(){
+    if(state.ball||state.shopOpen||!state.active)return;
+    state.score=0; // Round score, factory total is meta total.
+    const sx=W/2, sy=95; const tx=state.aimingX, ty=H;
+    const ang=Math.atan2(ty-sy,tx-sx); const speed=7.5+state.power*7.5;
+    let mult=1;
+    if(state.items.includes('double') && rand()<.25){mult=2;log('DOUBLE TROUBLE activated!','accent');}
+    if(state.items.filter(x=>x==='juice').length){ mult*=1.2; const ix=state.items.indexOf('juice');state.items.splice(ix,1);log('Big Number Juice boosted this launch.','accent'); }
+    state.ball={x:sx,y:sy,vx:Math.cos(ang)*speed,vy:Math.sin(ang)*speed,trail:true,mult};
+    log('Nubby launched.');
+  }
+
+  function step(){
+    if(state.ball){
+      const b=state.ball;b.x+=b.vx;b.y+=b.vy;b.vy+=.16;b.vx*=.999;b.vy*=.999;
+      if(b.x<18){b.x=18;b.vx=Math.abs(b.vx)*.92;} if(b.x>W-18){b.x=W-18;b.vx=-Math.abs(b.vx)*.92;}
+      // bounce off pegs
+      for(const p of state.board){ if(p.value>0 && pointToPeg(b,p)){
+          popPeg(p,b.mult); const nx=(b.x-p.x),ny=(b.y-p.y); const d=Math.max(1,Math.hypot(nx,ny));
+          const ux=nx/d,uy=ny/d; const dot=b.vx*ux+b.vy*uy; b.vx-=2*dot*ux; b.vy-=2*dot*uy; b.x=p.x+ux*35;b.y=p.y+uy*35;b.vx*=.88;b.vy*=.88;
+        }
+      }
+      if(b.y>H+40){endBall();}
+    }
+    state.board.forEach(p=>{p.pulse*=.88;if(p.pulse<.02)p.pulse=0;});
+    render();requestAnimationFrame(step);
+  }
+
+  function endBall(){
+    state.ball=null;
+    if(state.score>=state.quota){
+      const rests=Math.max(1,Math.floor(state.score/state.quota));
+      state.coins+=rests;
+      log(`QUOTA CLEARED! ${rests} restock${rests===1?'':'s'} awarded.`,'good');
+      restock(rests);
+    }else{
+      state.lives--; log(`Quota missed: ${fmt(state.score)} / ${fmt(state.quota)}.`,'bad');
+      if(state.lives<=0){lose();return;}
+    }
+    // small quota increase after every resolved launch so the game ramps.
+    state.quota=Math.ceil((state.quota*1.18)+2);
+    render();
+  }
+
+  function restock(times){
+    const addVal=Math.pow(2,Math.floor(state.round/5));
+    for(let t=0;t<times;t++){
+      for(const p of state.board){if(p.value<=0){p.value=addVal;p.popped=false;}}
+      // One non-recursive merge pass by value.
+      const groups={};state.board.filter(p=>p.value>0).forEach(p=>(groups[p.value]??=[]).push(p));
+      Object.keys(groups).forEach(k=>{const a=groups[k];if(a.length>=2){const target=a[0],other=a[1];target.value*=2;other.value=0;other.popped=true;}});
+    }
+  }
+
+  function openShop(){
+    if(!state.active)return;
+    const overlay=$('shopOverlay');overlay.style.display='flex';state.shopOpen=true;$('shopCards').innerHTML='';
+    const picks=[...itemDefs].sort(()=>rand()-.5).slice(0,3);
+    picks.forEach(def=>{const c=document.createElement('div');c.className='card';c.innerHTML=`<h3>${def.name}</h3><p>${def.desc}</p><div><b>${def.cost} coins</b><button style="float:right" ${state.coins<def.cost?'disabled':''}>BUY</button></div>`;c.querySelector('button').onclick=()=>{if(state.coins<def.cost)return;state.coins-=def.cost;def.apply();log(`Purchased ${def.name}.`,'accent');render();c.querySelector('button').disabled=true;c.querySelector('button').textContent='BOUGHT';};$('shopCards').appendChild(c);});
+  }
+  function closeShop(){ $('shopOverlay').style.display='none';state.shopOpen=false; state.round++; makeBoard(); state.quota=Math.ceil(state.quota*1.25); log(`Starting Round ${state.round}.`,'accent'); render(); }
+
+  function lose(){state.active=false;$('endTitle').textContent='SHIFT FAILED';$('endText').innerHTML=`<p>The factory quota was missed too many times, so the sun gets the last word.</p><p><b>Rounds cleared:</b> ${state.round-1}<br><b>Factory total:</b> ${fmt(state.total)}</p>`;$('endOverlay').style.display='flex';}
+  function win(){state.active=false;$('endTitle').textContent='SHIFT COMPLETE';$('endText').innerHTML=`<p>You reached the end of this prototype's shift.</p><p><b>Factory total:</b> ${fmt(state.total)}</p>`;$('endOverlay').style.display='flex';}
+
+  function reset(){
+    Object.assign(state,{round:1,score:0,total:0,coins:4,lives:3,quota:10,active:true,pops:0,power:.60,aimingX:W/2,ball:null,items:[],shopOpen:false,rngSeed:Date.now()>>>0});
+    $('logs').innerHTML='';makeBoard();log('Welcome to Plinker Plonker.','accent');log('Meet the quota to keep the factory running.');render();
+  }
+
+  // Input: mouse position aims. Vertical mouse drag changes power.
+  let dragging=false;
+  canvas.addEventListener('mousemove',e=>{const r=canvas.getBoundingClientRect();const x=(e.clientX-r.left)*W/r.width;state.aimingX=clamp(x,30,W-30);if(dragging){const y=(e.clientY-r.top)*H/r.height;state.power=clamp(1-y/H,.15,.98);}render();});
+  canvas.addEventListener('mousedown',()=>dragging=true);window.addEventListener('mouseup',()=>dragging=false);
+  $('launch').onclick=launch;$('shop').onclick=openShop;$('closeShop').onclick=closeShop;$('restart').onclick=()=>{$('endOverlay').style.display='none';reset();};$('startBtn').onclick=()=>{$('titleScreen').style.display='none';reset();};
+
+  // Factory Mart unlock every 5 rounds.
+  setInterval(()=>{ if(state.active && !state.ball && !state.shopOpen && state.round>1 && state.round%5===0){$('shop').disabled=false;} else $('shop').disabled=state.shopOpen||!!state.ball||!state.active; },250);
+
+  makeBoard();render();requestAnimationFrame(step);
+})();
+</script>
+</body>
+</html>
